@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "author": "UNAH - Paradigmas de Programacion",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": { "env": "micropython-20231227-v1.22.0" }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -150,
+      "left": 120,
+      "attrs": { "i2cAddress": "0x3c" }
+    },
+    {
+      "type": "wokwi-led-ring",
+      "id": "ring1",
+      "top": -250,
+      "left": 330,
+      "attrs": { "pixels": "16" }
+    },
+    { "type": "wokwi-resistor", "id": "r1", "top": 60, "left": 180, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "led1", "top": 20, "left": 280, "attrs": { "color": "red" } },
+    { "type": "wokwi-rgb-led", "id": "rgb1", "top": 20, "left": 350, "attrs": { "common": "cathode" } },
+    { "type": "wokwi-servo", "id": "servo1", "top": 150, "left": 260, "attrs": {} },
+    { "type": "wokwi-buzzer", "id": "bz1", "top": 280, "left": 200, "attrs": { "volume": "0.2" } },
+    { "type": "wokwi-dht22", "id": "dht1", "top": -120, "left": -150, "attrs": { "temperature": "24", "humidity": "55" } },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": 70, "left": -220, "attrs": {} },
+    { "type": "wokwi-pushbutton", "id": "btn1", "top": 230, "left": -200, "attrs": { "color": "blue", "label": "Avisar" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "oled1:GND", "esp:GND.2", "black", [] ],
+    [ "oled1:VCC", "esp:3V3", "red", [] ],
+    [ "oled1:SCL", "esp:22", "green", [] ],
+    [ "oled1:SDA", "esp:21", "blue", [] ],
+
+    [ "ring1:DIN", "esp:13", "magenta", [] ],
+    [ "ring1:VCC", "esp:5V", "red", [] ],
+    [ "ring1:GND", "esp:GND.2", "black", [] ],
+
+    [ "esp:26", "r1:1", "orange", [] ],
+    [ "r1:2", "led1:A", "orange", [] ],
+    [ "led1:C", "esp:GND.3", "black", [] ],
+
+    [ "rgb1:R", "esp:25", "red", [] ],
+    [ "rgb1:G", "esp:33", "green", [] ],
+    [ "rgb1:B", "esp:32", "blue", [] ],
+    [ "rgb1:COM", "esp:GND.3", "black", [] ],
+
+    [ "servo1:PWM", "esp:18", "orange", [] ],
+    [ "servo1:V+", "esp:5V", "red", [] ],
+    [ "servo1:GND", "esp:GND.2", "black", [] ],
+
+    [ "bz1:2", "esp:27", "purple", [] ],
+    [ "bz1:1", "esp:GND.3", "black", [] ],
+
+    [ "dht1:VCC", "esp:3V3", "red", [] ],
+    [ "dht1:SDA", "esp:15", "yellow", [] ],
+    [ "dht1:GND", "esp:GND.1", "black", [] ],
+
+    [ "pot1:VCC", "esp:3V3", "red", [] ],
+    [ "pot1:SIG", "esp:34", "violet", [] ],
+    [ "pot1:GND", "esp:GND.1", "black", [] ],
+
+    [ "btn1:1.l", "esp:4", "blue", [] ],
+    [ "btn1:2.l", "esp:GND.1", "black", [] ]
+  ],
+  "dependencies": {}
+}

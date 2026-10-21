@@ -8,7 +8,9 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
-    "flet>=1.0.4"
+    "flet>=1.0.4",
+    "httpx>=0.28.1",
+    "paho-mqtt>=2.1",
 ]
 
 [dependency-groups]
