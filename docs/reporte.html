@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel IoT con Flet y un ESP32 simulado en Wokwi</title>
 <style>
-  /* Artículo científico (estilo IEEE adaptado), a una sola columna.
+  /* Artículo científico (estilo IEEE adaptado) a dos columnas.
+     A4, márgenes 2 cm izquierda y arriba, 1,5 cm derecha y abajo:
+     ancho útil 17,5 cm = dos columnas de 8,5 cm + 0,5 cm entre ellas.
      Imprimir desde Chrome: Guardar como PDF, A4, márgenes «Predeterminados»,
      sin «Encabezados y pies de página». */
   @page {
     size: A4;
-    margin: 2cm 1.5cm 1.5cm 2cm;          /* arriba, derecha, abajo, izquierda */
+    margin: 2cm 1.5cm 1.5cm 2cm;
     @top-left { content: counter(page); font: 8pt "Times New Roman", Times, serif; vertical-align: bottom; padding-bottom: 4mm; }
   }
 
@@ -18,7 +20,7 @@
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
     margin: 0;
-    font: 10pt/1.32 "Times New Roman", Times, "Liberation Serif", serif;
+    font: 10pt/1.22 "Times New Roman", Times, "Liberation Serif", serif;
     color: #000;
     background: #d9d9d9;
     hyphens: auto;
@@ -28,65 +30,59 @@
   @media screen { .hoja { margin: 20px auto; box-shadow: 0 2px 18px rgba(0,0,0,.25); } }
   @media print { body { background: #fff; } .hoja { width: auto; padding: 0; } }
 
-  /* ---------- Cabecera ---------- */
-  .titulo { font-size: 24pt; font-weight: normal; text-align: center; line-height: 1.12; margin: 0 0 10pt; hyphens: none; -webkit-hyphens: none; }
-  h2, h3, code, pre, th { hyphens: none; -webkit-hyphens: none; }
-  .autores { font-size: 11pt; text-align: center; margin: 0 0 4pt; text-indent: 0; line-height: 1.3; }
-  .institucion { font-size: 11pt; text-align: center; font-style: italic; margin: 0 0 22pt; text-indent: 0; }
-
-  .resumen, .claves { font-size: 9pt; font-weight: bold; text-align: justify; margin: 0; text-indent: 1em; line-height: 1.25; }
+  /* ---------- Cabecera, a todo el ancho ---------- */
+  .titulo { font-size: 24pt; font-weight: normal; text-align: center; line-height: 1.12; margin: 0 0 9pt; hyphens: none; -webkit-hyphens: none; }
+  .autores { font-size: 11pt; text-align: center; margin: 0 0 3pt; text-indent: 0; line-height: 1.25; }
+  .institucion { font-size: 11pt; text-align: center; font-style: italic; margin: 0 0 16pt; text-indent: 0; }
+  .resumen, .claves { font-size: 9pt; font-weight: bold; text-align: justify; margin: 0; text-indent: 1em; line-height: 1.2; }
   .resumen i, .claves i { font-weight: bold; }
-  .claves { margin-bottom: 14pt; }
+  .claves { margin-bottom: 12pt; }
 
-  /* ---------- Texto ---------- */
-  p { margin: 0; text-align: justify; text-indent: 1em; orphans: 3; widows: 3; }
+  /* ---------- Cuerpo a dos columnas ---------- */
+  .columnas { column-count: 2; column-gap: .5cm; column-fill: balance; }
+  .ancho { column-span: all; }
+
+  p { margin: 0; text-align: justify; text-indent: 1em; orphans: 2; widows: 2; }
+  .sin-sangria { text-indent: 0; }
   h2 {
     font-size: 10pt; font-weight: normal; font-variant: small-caps; text-align: center;
-    margin: 14pt 0 5pt; letter-spacing: .02em; break-after: avoid;
+    margin: 10pt 0 4pt; letter-spacing: .02em; break-after: avoid; hyphens: none; -webkit-hyphens: none;
   }
-  h3 { font-size: 10pt; font-weight: normal; font-style: italic; margin: 9pt 0 3pt; break-after: avoid; }
-  .sin-sangria { text-indent: 0; }
-  ul, ol { margin: 3pt 0 4pt; padding-left: 2.2em; }
-  li { text-align: justify; margin-bottom: 2pt; }
-  code, .mono { font-family: inherit; font-size: inherit; font-style: italic; }
+  h3 { font-size: 10pt; font-weight: normal; font-style: italic; margin: 6pt 0 2pt; break-after: avoid; hyphens: none; -webkit-hyphens: none; }
+  ol, ul { margin: 2pt 0 3pt; padding-left: 1.6em; }
+  li { text-align: justify; margin-bottom: 1pt; }
+  code { font-family: inherit; font-style: italic; hyphens: none; -webkit-hyphens: none; }
 
-  /* Letra capital y versales de la primera palabra (estilo IEEE) */
-  .capital { float: left; font-size: 25.5pt; line-height: .84; margin: 1.5pt 2.5pt 0 0; font-weight: normal; }
+  /* Letra capital de dos líneas y versales de la primera palabra */
+  .capital { float: left; font-size: 23.5pt; line-height: .84; margin: 1.5pt 2pt 0 0; }
   .versal { font-variant: small-caps; }
 
   /* ---------- Figuras y tablas ---------- */
-  figure { margin: 9pt 0 10pt; break-inside: avoid; text-align: center; }
+  figure { margin: 6pt 0 8pt; break-inside: avoid; }
   figure img { max-width: 100%; display: block; margin: 0 auto; border: .5pt solid #888; }
-  figcaption { font-size: 8pt; text-align: justify; margin-top: 4pt; line-height: 1.25; }
-  .fila { display: grid; gap: 8pt; align-items: start; }
-  .fila.tres { grid-template-columns: repeat(3, 1fr); }
-  .fila.dos { grid-template-columns: 1fr 1fr; }
-  .fila .sub, .sub.fila { font-size: 8pt; text-align: center; margin-top: 2pt; }
+  figcaption { font-size: 8pt; text-align: justify; margin-top: 3pt; line-height: 1.2; }
+  .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6pt; }
+  .sub { font-size: 8pt; text-align: center; margin-top: 1pt; }
 
-  .tabla { margin: 10pt 0 10pt; }   /* puede partirse: el encabezado se repite */
-  .tabla .rotulo { font-size: 8pt; text-align: center; font-variant: small-caps; margin: 0; text-indent: 0; break-after: avoid; }
-  .tabla .nombre { font-size: 8pt; text-align: center; font-variant: small-caps; margin: 0 0 4pt; text-indent: 0; break-after: avoid; }
-  .tabla thead { break-after: avoid; }
-  table { width: 100%; border-collapse: collapse; font-size: 8.5pt; line-height: 1.25; }
-  thead { display: table-header-group; }
-  th, td { text-align: left; vertical-align: top; padding: 2.5pt 5pt; }
+  .tabla { margin: 6pt 0 8pt; break-inside: avoid; }
+  .rotulo, .nombre { font-size: 8pt; text-align: center; font-variant: small-caps; margin: 0; text-indent: 0; }
+  .nombre { margin-bottom: 3pt; }
+  table { width: 100%; border-collapse: collapse; font-size: 8pt; line-height: 1.2; }
+  th, td { text-align: left; vertical-align: top; padding: 1.6pt 3pt; hyphens: manual; -webkit-hyphens: manual; }
   thead th { border-top: 1pt solid #000; border-bottom: .6pt solid #000; font-weight: normal; font-style: italic; }
   tbody tr:last-child td { border-bottom: 1pt solid #000; }
-  tr { break-inside: avoid; }
-  td.n { text-align: right; white-space: nowrap; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
 
   pre {
-    font: 7.6pt/1.3 "Courier New", Courier, monospace; margin: 4pt 0 8pt; padding: 6pt 8pt;
+    font: 7pt/1.25 "Courier New", Courier, monospace; margin: 3pt 0 6pt; padding: 4pt 5pt;
     border: .5pt solid #999; background: #f6f6f6; white-space: pre-wrap; break-inside: avoid;
+    hyphens: none; -webkit-hyphens: none;
   }
 
-  .referencias { font-size: 8pt; line-height: 1.3; padding-left: 0; list-style: none; margin: 0; }
-  .referencias li { display: grid; grid-template-columns: 2.4em 1fr; text-align: left; margin-bottom: 3pt; }
+  .referencias { font-size: 8pt; line-height: 1.22; padding-left: 0; list-style: none; margin: 0; }
+  .referencias li { display: grid; grid-template-columns: 2.1em 1fr; text-align: left; margin-bottom: 2pt; hyphens: none; -webkit-hyphens: none; }
   .referencias a { color: #000; text-decoration: none; word-break: break-all; }
 
-  .apendice { break-before: page; }
-
-  /* Diagrama */
   svg text { font-family: "Times New Roman", Times, serif; }
 </style>
 </head>
@@ -95,58 +91,52 @@
 
 <h1 class="titulo">Panel IoT con Flet y un ESP32 simulado en Wokwi: control y monitoreo por MQTT y HTTP</h1>
 <p class="autores">
-  Claudio Rafael Vasquez Lopez, 20192002377<br>
-  Axel David Cornejo Ortega, 20192030294<br>
-  Eva Sarahí Membreño Argueta, 20232000863<br>
-  Brenda Nicole Santiago, 20212030857<br>
-  Daniel Orlando Fuentes Teruel, 20212020451<br>
-  José Omar Baca Aguilar, 20172030218
+  Claudio Rafael Vasquez Lopez, 20192002377 · Axel David Cornejo Ortega, 20192030294<br>
+  Eva Sarahí Membreño Argueta, 20232000863 · Brenda Nicole Santiago, 20212030857<br>
+  Daniel Orlando Fuentes Teruel, 20212020451 · José Omar Baca Aguilar, 20172030218
 </p>
 <p class="institucion">Universidad Nacional Autónoma de Honduras, Paradigmas de Programación</p>
 
-<p class="resumen"><i>Resumen</i>—Se presenta una aplicación de escritorio y web escrita en Python con el marco Flet que controla un microcontrolador ESP32 simulado en la plataforma Wokwi y muestra en tiempo real las lecturas de sus sensores. La interfaz parte de un formulario de ejemplo (campo de texto, casilla, control deslizante, lista desplegable, opciones excluyentes e interruptor) y asigna a cada elemento una acción física: encender un LED, mover un servomotor, fijar el color de un LED RGB y de un anillo de 16 LEDs direccionables, escribir en una pantalla OLED y activar un zumbador. El firmware, escrito en MicroPython, atiende de forma concurrente un servidor web propio y un cliente de mensajería por publicación y suscripción, y ambos canales comparten el mismo formato de mensajes. Como el simulador gratuito sólo admite conexiones salientes desde el microcontrolador, la comunicación por publicación y suscripción a través de un intermediario público resultó la vía viable sin costo. Las pruebas de extremo a extremo sobre el simulador confirmaron el funcionamiento de todos los controles y de todas las lecturas, con un tiempo aproximado de 0,6 s desde la interfaz hasta el simulador y de 1,1 s en sentido inverso, además de la detección de desconexión en menos de 6 s y la reconexión automática.</p>
+<p class="resumen"><i>Resumen</i>—Se presenta una aplicación en Python con el marco Flet que controla un microcontrolador ESP32 simulado en Wokwi y muestra en tiempo real las lecturas de sus sensores. Cada elemento de un formulario de ejemplo se asoció a una acción física: encender un LED, mover un servomotor, fijar el color de un LED RGB y de un anillo de LEDs, escribir en una pantalla OLED y activar un zumbador. El firmware en MicroPython atiende de forma concurrente un servidor web propio y un cliente de publicación y suscripción con el mismo formato de mensajes. Como el simulador gratuito sólo admite conexiones salientes, la vía viable sin costo fue un intermediario público de mensajería. Las pruebas sobre el simulador confirmaron todos los controles y lecturas, con tiempos de 0,6&nbsp;s hacia el simulador y 1,1&nbsp;s en sentido inverso.</p>
 <p class="claves"><i>Palabras clave</i>— Internet de las cosas, MicroPython, interfaces gráficas de usuario.</p>
+
+<div class="columnas">
 
 <!-- ======================= I ======================= -->
 <h2>I. Introducción</h2>
-<p class="sin-sangria"><span class="capital">L</span><span class="versal">as interfaces gráficas</span> que controlan dispositivos físicos reúnen en un mismo programa varios de los paradigmas estudiados en el curso: la programación orientada a eventos, que gobierna la interfaz; la orientada a objetos, que organiza los componentes; y la concurrente, que permite atender la red y el hardware al mismo tiempo. Este trabajo aplica esos paradigmas a un caso concreto: una aplicación en Flet [1] que se comunica con un ESP32 programado en MicroPython [2] y simulado en Wokwi [3].</p>
-<p>El punto de partida fue un fragmento de referencia que conecta el ESP32 a la red inalámbrica del simulador (<code>Wokwi-GUEST</code>) y consulta una API pública con la biblioteca <code>urequests</code>. A partir de él se pidió que el ESP32 actuara como servidor web y que la aplicación permitiera encender un LED, enviar el valor de un control deslizante y recibir información del microcontrolador para mostrarla en un cuadro de texto, con una estética mejorada y el logotipo de la universidad.</p>
-<p>Los aportes del trabajo son tres: un firmware que ofrece el mismo protocolo por HTTP y por MQTT [4]; una capa de conexión en la aplicación que abstrae ambos transportes detrás de una misma interfaz; y una herramienta que ejecuta el firmware sin modificaciones en una computadora, lo que permitió probar la aplicación sin depender del simulador. La sección II describe los materiales y la arquitectura; la sección III, los resultados de las pruebas; la sección IV discute las decisiones y limitaciones; y la sección V presenta las conclusiones. Los apéndices contienen el formato de los mensajes, fragmentos del código, las instrucciones de ejecución y la estructura del repositorio. El código fuente completo está disponible en [9].</p>
+<p class="sin-sangria"><span class="capital">L</span><span class="versal">as interfaces</span> que controlan dispositivos físicos combinan tres paradigmas del curso: la programación orientada a eventos, que gobierna la interfaz; la orientada a objetos, que organiza los componentes; y la concurrente, que atiende la red y el hardware a la vez. Este trabajo los aplica en una aplicación Flet [1] que se comunica con un ESP32 programado en MicroPython [2] y simulado en Wokwi [3].</p>
+<p>Se partió de un fragmento que conecta el ESP32 a la red <code>Wokwi-GUEST</code> y consulta una API con <code>urequests</code>. El objetivo fue que el ESP32 actuara como servidor web y que la aplicación encendiera un LED, enviara el valor de un control deslizante y mostrara en un cuadro de texto la información recibida. El código fuente está disponible en [9].</p>
 
 <!-- ======================= II ======================= -->
 <h2>II. Materiales y métodos</h2>
 
-<h3>A. Plataforma de simulación y circuito</h3>
-<p>Se utilizó una placa ESP32 DevKit C v4 en Wokwi con el intérprete MicroPython 1.22. El circuito, definido en el archivo <code>diagram.json</code>, conecta los componentes de la Tabla I. Los actuadores representan las acciones pedidas desde la interfaz y los sensores aportan los datos que la aplicación debe mostrar; el anillo de LEDs direccionables se agregó para visualizar el valor del control deslizante y algunos efectos de color.</p>
+<h3>A. Circuito</h3>
+<p>Se usó un ESP32 DevKit C v4 con MicroPython 1.22. La Tabla&nbsp;I lista los componentes; el anillo de 16&nbsp;LEDs direccionables se agregó para visualizar el control deslizante.</p>
 
 <div class="tabla">
-  <p class="rotulo">Tabla I</p>
-  <p class="nombre">Componentes del circuito y su función</p>
+  <p class="rotulo">Tabla&nbsp;I</p>
+  <p class="nombre">Componentes del circuito</p>
   <table>
-    <thead><tr><th>Componente</th><th>Pin del ESP32</th><th>Función en el sistema</th></tr></thead>
+    <thead><tr><th>Componente</th><th>GPIO</th><th>Función</th></tr></thead>
     <tbody>
-      <tr><td>LED rojo con resistencia de 220 Ω</td><td>GPIO 26</td><td>Botón «Encender LED»</td></tr>
-      <tr><td>LED RGB de cátodo común</td><td>GPIO 25, 33, 32</td><td>Color elegido en la lista desplegable</td></tr>
-      <tr><td>Servomotor</td><td>GPIO 18</td><td>Control deslizante, de 0 a 180°</td></tr>
-      <tr><td>Anillo de 16 LEDs direccionables (NeoPixel)</td><td>GPIO 13</td><td>Nivel del control deslizante y efectos</td></tr>
-      <tr><td>Pantalla OLED SSD1306 (I²C)</td><td>GPIO 21, 22</td><td>Nombre, opción elegida y mensajes</td></tr>
-      <tr><td>Zumbador</td><td>GPIO 27</td><td>Notificaciones y melodía</td></tr>
-      <tr><td>Sensor DHT22</td><td>GPIO 15</td><td>Temperatura y humedad</td></tr>
-      <tr><td>Potenciómetro</td><td>GPIO 34 (ADC)</td><td>Lectura analógica de 0 a 100 %</td></tr>
-      <tr><td>Pulsador «Avisar»</td><td>GPIO 4</td><td>Evento que genera un aviso en la interfaz</td></tr>
+      <tr><td>LED rojo</td><td>26</td><td>Encender LED</td></tr>
+      <tr><td>LED RGB</td><td>25, 33, 32</td><td>Color elegido</td></tr>
+      <tr><td>Servomotor</td><td>18</td><td>Deslizante, 0–180°</td></tr>
+      <tr><td>Anillo NeoPixel</td><td>13</td><td>Nivel y efectos</td></tr>
+      <tr><td>OLED SSD1306</td><td>21, 22</td><td>Nombre y mensajes</td></tr>
+      <tr><td>Zumbador</td><td>27</td><td>Avisos y melodía</td></tr>
+      <tr><td>DHT22</td><td>15</td><td>Temperatura, humedad</td></tr>
+      <tr><td>Potenciómetro</td><td>34</td><td>Lectura de 0 a 100&nbsp;%</td></tr>
+      <tr><td>Pulsador</td><td>4</td><td>Aviso en la interfaz</td></tr>
     </tbody>
   </table>
 </div>
 
-<h3>B. Restricción de red y arquitectura de comunicación</h3>
-<p>En el simulador web, el ESP32 accede a internet mediante una pasarela pública que sólo permite conexiones salientes. Para alcanzar un servidor que corre en el ESP32 desde la computadora del usuario, la documentación de Wokwi indica que se requiere la pasarela privada (<i>Private IoT Gateway</i>), disponible únicamente en los planes de pago [3], [5]. Por esa razón el firmware implementa dos transportes con el mismo contenido (Fig. 1):</p>
-<ul>
-  <li><i>MQTT</i>: el ESP32 y la aplicación se conectan, ambos hacia afuera, a un intermediario (<i>broker</i>) público [6]. El ESP32 publica su estado cada segundo y recibe los comandos por un tema de control. La aplicación usa la biblioteca paho-mqtt [8] y el ESP32, el módulo <code>umqtt.simple</code> incluido en MicroPython.</li>
-  <li><i>HTTP directo</i>: el ESP32 actúa como servidor web en el puerto 80. Esta vía cumple el planteamiento original y funciona con la pasarela privada o con una placa física en la misma red.</li>
-</ul>
+<h3>B. Arquitectura de comunicación</h3>
+<p>En el simulador web el ESP32 sólo puede abrir conexiones salientes; para alcanzar un servidor en el ESP32 desde la computadora se requiere la pasarela privada de Wokwi, disponible en planes de pago [3], [5]. Por eso el firmware ofrece dos transportes con los mismos mensajes JSON (Fig.&nbsp;1): MQTT [4], donde el ESP32 y la aplicación se conectan a un intermediario público [6] mediante <code>umqtt.simple</code> y paho-mqtt [8]; y HTTP directo, donde el ESP32 es el servidor en el puerto 80.</p>
 
-<figure>
-  <svg viewBox="0 0 760 300" width="92%" role="img" aria-label="Arquitectura de comunicación">
+<figure class="ancho">
+  <svg viewBox="0 0 980 150" width="100%" role="img" aria-label="Arquitectura de comunicación">
     <defs>
       <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
         <path d="M0,0 L10,5 L0,10 z" fill="#000"/>
@@ -154,294 +144,159 @@
     </defs>
     <style>
       .c { fill: #fff; stroke: #000; stroke-width: 1.2; }
-      .c2 { fill: #f2f2f2; stroke: #000; stroke-width: 1.2; }
+      .c2 { fill: #f0f0f0; stroke: #000; stroke-width: 1.2; }
       .t { font-size: 15px; font-weight: bold; }
       .s { font-size: 12.5px; }
       .m { font-size: 12px; font-style: italic; }
-      .e { font-size: 12px; font-variant: small-caps; letter-spacing: .04em; }
+      .e { font-size: 12.5px; font-variant: small-caps; letter-spacing: .04em; }
     </style>
-    <text x="20" y="20" class="e">(a) MQTT: ambos extremos inician la conexión</text>
-    <rect x="20" y="32" width="190" height="84" class="c"/>
-    <text x="36" y="58" class="t">Aplicación Flet</text>
-    <text x="36" y="78" class="s">computadora del usuario</text>
-    <text x="36" y="96" class="s">cliente paho-mqtt</text>
-    <rect x="285" y="32" width="190" height="84" class="c2"/>
-    <text x="301" y="58" class="t">Broker MQTT</text>
-    <text x="301" y="78" class="s">broker.hivemq.com:1883</text>
-    <text x="301" y="96" class="s">o Mosquitto propio</text>
-    <rect x="550" y="32" width="190" height="84" class="c"/>
-    <text x="566" y="58" class="t">ESP32 en Wokwi</text>
-    <text x="566" y="78" class="s">MicroPython 1.22</text>
-    <text x="566" y="96" class="s">cliente umqtt.simple</text>
-    <line x1="212" y1="66" x2="283" y2="66" stroke="#000" stroke-width="1.4" marker-end="url(#f)"/>
-    <line x1="548" y1="66" x2="477" y2="66" stroke="#000" stroke-width="1.4" marker-end="url(#f)"/>
-    <text x="218" y="140" class="m">publica …/control</text>
-    <text x="218" y="156" class="m">se suscribe a …/estado</text>
-    <text x="480" y="140" class="m">publica …/estado cada 1 s</text>
-    <text x="480" y="156" class="m">se suscribe a …/control</text>
+    <text x="0" y="16" class="e">(a) MQTT: ambos extremos inician la conexión</text>
+    <rect x="0" y="28" width="150" height="70" class="c"/>
+    <text x="12" y="52" class="t">Aplicación Flet</text>
+    <text x="12" y="72" class="s">paho-mqtt</text>
+    <rect x="215" y="28" width="160" height="70" class="c2"/>
+    <text x="227" y="52" class="t">Broker MQTT</text>
+    <text x="227" y="72" class="s">broker.hivemq.com</text>
+    <text x="227" y="88" class="s">o Mosquitto propio</text>
+    <rect x="440" y="28" width="150" height="70" class="c"/>
+    <text x="452" y="52" class="t">ESP32 en Wokwi</text>
+    <text x="452" y="72" class="s">umqtt.simple</text>
+    <line x1="152" y1="58" x2="213" y2="58" stroke="#000" stroke-width="1.4" marker-end="url(#f)"/>
+    <line x1="438" y1="58" x2="377" y2="58" stroke="#000" stroke-width="1.4" marker-end="url(#f)"/>
+    <text x="0" y="122" class="m">la app publica …/control; el ESP32 publica …/estado cada 1&nbsp;s</text>
 
-    <text x="20" y="206" class="e">(b) HTTP directo: el ESP32 es el servidor</text>
-    <rect x="20" y="218" width="190" height="64" class="c"/>
-    <text x="36" y="244" class="t">Aplicación Flet</text>
-    <text x="36" y="264" class="s">cliente httpx</text>
-    <rect x="550" y="218" width="190" height="64" class="c"/>
-    <text x="566" y="244" class="t">ESP32, puerto 80</text>
-    <text x="566" y="264" class="s">servidor asyncio</text>
-    <line x1="212" y1="250" x2="548" y2="250" stroke="#000" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#f)"/>
-    <text x="250" y="240" class="m">GET /api/estado · POST /api/control</text>
-    <text x="250" y="270" class="s">En Wokwi requiere la pasarela privada.</text>
+    <text x="650" y="16" class="e">(b) HTTP directo: el ESP32 es el servidor</text>
+    <rect x="650" y="28" width="130" height="70" class="c"/>
+    <text x="662" y="52" class="t">Aplicación</text>
+    <text x="662" y="72" class="s">httpx</text>
+    <rect x="850" y="28" width="130" height="70" class="c"/>
+    <text x="862" y="52" class="t">ESP32 :80</text>
+    <text x="862" y="72" class="s">asyncio</text>
+    <line x1="782" y1="58" x2="848" y2="58" stroke="#000" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#f)"/>
+    <text x="650" y="122" class="m">GET /api/estado · POST /api/control</text>
+    <text x="650" y="140" class="s">En Wokwi requiere la pasarela privada.</text>
   </svg>
-  <figcaption>Fig. 1. Arquitectura de comunicación. (a) Por MQTT ninguna de las partes necesita aceptar conexiones entrantes, lo que la hace compatible con la pasarela pública de Wokwi. (b) Por HTTP la aplicación se conecta directamente al servidor del ESP32. Ambas vías intercambian los mismos mensajes JSON.</figcaption>
+  <figcaption>Fig.&nbsp;1. Arquitectura de comunicación. (a) Por MQTT ninguna parte acepta conexiones entrantes, lo que es compatible con la pasarela pública de Wokwi. (b) Por HTTP la aplicación se conecta al servidor del ESP32. Ambas vías intercambian los mismos mensajes.</figcaption>
 </figure>
 
-<h3>C. Protocolo de mensajes</h3>
-<p>Los mensajes se codifican en JSON. Un <i>comando</i> contiene sólo los campos que el usuario modificó (por ejemplo, <code>{"led": true, "nivel": 75}</code>) y un <i>estado</i> reúne las lecturas de los sensores, el valor actual de cada salida, los colores del anillo y los eventos recientes. Cada evento lleva un identificador creciente, de modo que la aplicación muestra sólo los que no ha visto y detecta un reinicio del ESP32 cuando los identificadores vuelven a empezar. La Tabla II resume los temas MQTT, todos bajo el prefijo <code>unah/paradigmas/&lt;código&gt;</code>, donde el código permite que varios usuarios compartan el intermediario público sin mezclar mensajes. El formato completo aparece en el Apéndice A.</p>
+<h3>C. Protocolo y firmware</h3>
+<p>Un <i>comando</i> contiene sólo los campos modificados y un <i>estado</i> reúne sensores, salidas, colores del anillo y eventos recientes (Apéndice&nbsp;A). Cada evento lleva un identificador creciente; así la aplicación no repite eventos y detecta un reinicio del ESP32. Por MQTT se usan tres temas bajo <code>unah/paradigmas/&lt;código&gt;</code>: <code>estado</code>, <code>control</code> y <code>conexion</code>, este último con una última voluntad <code>offline</code> y un intervalo de mantenimiento de 15&nbsp;s.</p>
+<p>El firmware ejecuta tareas cooperativas de <code>asyncio</code> en un solo núcleo: servidor HTTP, cliente MQTT, sensores cada 2&nbsp;s, anillo cada 80&nbsp;ms y pantalla cada 250&nbsp;ms. Cada comando se valida: los números se limitan a su rango, se rechazan valores desconocidos y un JSON inválido no detiene el programa. Una temperatura superior a 35&nbsp;°C genera una alerta.</p>
+
+<h3>D. Aplicación en Flet</h3>
+<p>La interfaz conserva los elementos del formulario de ejemplo, con los colores y el logotipo de la universidad y un indicador de conexión (Fig.&nbsp;2). La Tabla&nbsp;II resume el efecto de cada control. Del ESP32 se reciben temperatura, humedad, potenciómetro, pulsaciones, señal inalámbrica, tiempo activo, memoria libre, ángulo del servomotor y colores del anillo; los eventos se muestran en el cuadro «Mensajes recibidos del ESP32».</p>
+
+<figure class="ancho">
+  <img src="img/app-conectada-wokwi.jpg" alt="Aplicación Flet conectada al ESP32 de Wokwi" style="width: 86%">
+  <figcaption>Fig.&nbsp;2. Aplicación conectada al ESP32 de Wokwi por MQTT. Con el DHT22 en 40&nbsp;°C, la lectura, la alerta y el aviso inferior llegan a la interfaz; el círculo reproduce en vivo el anillo de LEDs.</figcaption>
+</figure>
 
 <div class="tabla">
-  <p class="rotulo">Tabla II</p>
-  <p class="nombre">Temas MQTT del sistema</p>
+  <p class="rotulo">Tabla&nbsp;II</p>
+  <p class="nombre">Controles de la interfaz</p>
   <table>
-    <thead><tr><th>Tema</th><th>Publica</th><th>Contenido</th></tr></thead>
+    <thead><tr><th>Control</th><th>Efecto en el ESP32</th></tr></thead>
     <tbody>
-      <tr><td><code>…/estado</code></td><td>ESP32, cada segundo y tras cada comando; mensaje retenido</td><td>Estado completo (≈1,1 KB)</td></tr>
-      <tr><td><code>…/control</code></td><td>Aplicación</td><td>Comando con los cambios pedidos</td></tr>
-      <tr><td><code>…/conexion</code></td><td>ESP32 al conectarse; el broker, como última voluntad</td><td><code>online</code> u <code>offline</code></td></tr>
+      <tr><td>Nombre</td><td>Saludo en la OLED</td></tr>
+      <tr><td>Acepto los términos</td><td>Habilita los controles (sólo interfaz)</td></tr>
+      <tr><td>Encender LED</td><td>LED encendido o apagado</td></tr>
+      <tr><td>Nivel (deslizante)</td><td>Servomotor y LEDs del anillo</td></tr>
+      <tr><td>Color favorito</td><td>LED RGB y anillo</td></tr>
+      <tr><td>Efecto del anillo</td><td>Nivel, respirar, arcoíris, termómetro</td></tr>
+      <tr><td>Framework favorito</td><td>Texto en la OLED</td></tr>
+      <tr><td>Notificaciones</td><td>Zumbador y avisos</td></tr>
+      <tr><td>Mensaje para la OLED</td><td>Texto libre en la OLED</td></tr>
+      <tr><td>Melodía / Reiniciar</td><td>Zumbador / contador en cero</td></tr>
     </tbody>
   </table>
 </div>
 
-<h3>D. Firmware del ESP32</h3>
-<p>El firmware se organiza en tareas cooperativas de <code>asyncio</code> que comparten un único núcleo: el servidor HTTP, el cliente MQTT, la lectura de sensores cada 2 s, la animación del anillo cada 80 ms y el refresco de la pantalla cada 250 ms. La función <code>aplicar</code> valida cada comando antes de usarlo: limita los valores numéricos a su rango, rechaza efectos y opciones desconocidos y descarta los mensajes que no son JSON válido sin detener el programa. El pulsador se atiende por interrupción con un filtro antirrebote de 250 ms, y la tarea de sensores convierte cada pulsación en un evento. Cuando la temperatura supera 35 °C se registra una alerta, que se cancela al bajar de 34 °C para evitar avisos repetidos.</p>
-<p>El cliente MQTT declara una última voluntad (<i>last will</i>) en el tema de conexión con el valor <code>offline</code>. Si la simulación se detiene sin cerrar la conexión, el intermediario publica ese valor cuando vence el intervalo de mantenimiento (<i>keepalive</i>), fijado en 15 s.</p>
+<h3>E. Paradigmas aplicados</h3>
+<p>La clase <code>Conexion</code> concentra la cola de cambios y el filtrado de eventos; <code>ConexionMQTT</code> y <code>ConexionHTTP</code> sólo redefinen <code>sincronizar</code>, y la interfaz usa cualquiera sin distinguirlas (polimorfismo). Cada control registra un manejador de eventos; en el firmware, el pulsador usa una interrupción. Como Flet ejecuta los manejadores en otros hilos, la cola se protege con un cerrojo y conserva sólo el último valor de cada campo, de modo que arrastrar el deslizante no satura al ESP32.</p>
 
-<h3>E. Aplicación en Flet</h3>
-<p>La interfaz conserva los seis elementos del formulario de ejemplo y añade los necesarios para las nuevas funciones (Fig. 2). Se emplearon los colores institucionales, el logotipo de la universidad en el encabezado y un indicador de conexión con la latencia. La Tabla III relaciona cada control con su efecto.</p>
-
-<figure>
-  <img src="img/app-conectada-wokwi.jpg" alt="Aplicación Flet conectada al ESP32 de Wokwi" style="width:100%">
-  <figcaption>Fig. 2. Aplicación conectada al ESP32 de Wokwi por MQTT. El sensor DHT22 se fijó en 40 °C en el simulador: la lectura aparece en el indicador de temperatura, la alerta se anota en el cuadro de mensajes recibidos y se muestra un aviso temporal en la parte inferior. El círculo central reproduce en vivo los colores del anillo de LEDs.</figcaption>
-</figure>
-
-<div class="tabla">
-  <p class="rotulo">Tabla III</p>
-  <p class="nombre">Controles de la interfaz y efecto en el ESP32</p>
-  <table>
-    <thead><tr><th>Control (tipo en Flet)</th><th>Efecto</th></tr></thead>
-    <tbody>
-      <tr><td>Nombre (<code>TextField</code>)</td><td>Saludo en la pantalla OLED</td></tr>
-      <tr><td>Acepto los términos (<code>Checkbox</code>)</td><td>Sólo en la interfaz: habilita o bloquea los demás controles</td></tr>
-      <tr><td>Encender LED (<code>FilledButton</code>)</td><td>Enciende o apaga el LED; el ESP32 confirma el estado real</td></tr>
-      <tr><td>Nivel (<code>Slider</code>)</td><td>Ángulo del servomotor (0–180°) y LEDs encendidos del anillo (0–16)</td></tr>
-      <tr><td>Color favorito (<code>Dropdown</code>)</td><td>Color del LED RGB y del anillo</td></tr>
-      <tr><td>Efecto del anillo (<code>SegmentedButton</code>)</td><td>Nivel, respiración, arcoíris o termómetro</td></tr>
-      <tr><td>Framework favorito (<code>RadioGroup</code>)</td><td>Texto en la pantalla OLED</td></tr>
-      <tr><td>Notificaciones (<code>Switch</code>)</td><td>Pitidos del zumbador y avisos en la interfaz</td></tr>
-      <tr><td>Mensaje para la OLED (<code>TextField</code>)</td><td>Texto libre; se desplaza si excede 16 caracteres</td></tr>
-      <tr><td>Tocar melodía / Reiniciar contador (botones)</td><td>Melodía en el zumbador / contador del pulsador en cero</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<p>Del ESP32 se reciben nueve datos: temperatura, humedad, potenciómetro, pulsaciones, intensidad de la señal inalámbrica, tiempo activo, memoria libre, ángulo del servomotor y colores del anillo. Los eventos se muestran en el cuadro de texto «Mensajes recibidos del ESP32».</p>
-
-<h3>F. Paradigmas de programación aplicados</h3>
-<p><i>Orientación a objetos.</i> La clase base <code>Conexion</code> concentra la cola de cambios pendientes y el filtrado de eventos; las subclases <code>ConexionMQTT</code> y <code>ConexionHTTP</code> sólo redefinen el método <code>sincronizar</code>. La interfaz usa cualquiera de las dos sin distinguirlas, un caso directo de polimorfismo.</p>
-<p><i>Programación orientada a eventos.</i> Cada control de Flet registra un manejador (<code>on_change</code>, <code>on_click</code>, <code>on_select</code>). En el firmware, el pulsador usa una interrupción y el cliente MQTT un manejador que se ejecuta al recibir un mensaje.</p>
-<p><i>Concurrencia.</i> Flet ejecuta los manejadores síncronos en hilos distintos del ciclo principal, por lo que la cola de cambios se protege con un cerrojo (<code>threading.Lock</code>). Al arrastrar el control deslizante se generan decenas de eventos por segundo; la cola conserva sólo el último valor de cada campo y el ciclo de sincronización los envía juntos, lo que evita saturar al microcontrolador. Si un envío falla por la red, los cambios se reintentan sin sobrescribir otros más recientes y sin repetir acciones como la melodía.</p>
-<p>La sincronización opera en ambos sentidos: la interfaz adopta el estado que informa el ESP32, de modo que un cambio hecho desde otra fuente también se refleja. Para que una respuesta atrasada no revierta un control que el usuario acaba de mover, durante 2 s se ignora lo que el ESP32 informe sobre ese control.</p>
-
-<h3>G. Método de verificación</h3>
-<p>La verificación se hizo en tres niveles. Primero, doce pruebas automáticas con <code>pytest</code> sobre la capa de conexión, con intermediarios y servidores simulados en memoria. Segundo, el firmware se ejecutó sin modificaciones en la computadora mediante <code>tools/esp32_en_pc.py</code>, que sustituye los módulos de MicroPython (<code>machine</code>, <code>network</code>, <code>dht</code>, <code>neopixel</code>, <code>framebuf</code> y <code>umqtt</code>) por imitaciones y permite simular el pulsador, el sensor y el potenciómetro desde la terminal. Tercero, se probó de extremo a extremo en el navegador con el simulador de Wokwi en ejecución y el intermediario público <code>broker.hivemq.com</code>.</p>
+<h3>F. Verificación</h3>
+<p>Se usaron tres niveles: doce pruebas automáticas con <code>pytest</code>; el firmware ejecutado sin cambios en la computadora con módulos de MicroPython imitados; y pruebas de extremo a extremo en el navegador con Wokwi y el intermediario <code>broker.hivemq.com</code>.</p>
 
 <!-- ======================= III ======================= -->
 <h2>III. Resultados</h2>
-
-<h3>A. Pruebas funcionales</h3>
-<p>La Tabla IV resume las pruebas realizadas sobre el simulador. Todas se completaron con el resultado esperado y el monitor serial no registró errores de MicroPython. La Fig. 3 muestra tres de los estados verificados en el circuito.</p>
+<p>Todas las pruebas de la Tabla&nbsp;III dieron el resultado esperado, sin errores en el monitor serial; la Fig.&nbsp;3 muestra tres estados del circuito. La Tabla&nbsp;IV reúne los tiempos medidos. Los dos primeros se tomaron con reloj hasta ver el cambio e incluyen la automatización del navegador. La diferencia entre el intermediario público y uno local indica que la mayor parte de la latencia proviene del viaje a internet. Las doce pruebas automáticas se aprobaron.</p>
 
 <div class="tabla">
-  <p class="rotulo">Tabla IV</p>
-  <p class="nombre">Pruebas de extremo a extremo en Wokwi por MQTT</p>
+  <p class="rotulo">Tabla&nbsp;III</p>
+  <p class="nombre">Pruebas en Wokwi por MQTT</p>
   <table>
-    <thead><tr><th>Prueba</th><th>Resultado observado</th></tr></thead>
+    <thead><tr><th>Prueba</th><th>Resultado</th></tr></thead>
     <tbody>
-      <tr><td>Arranque del firmware</td><td>Conexión inalámbrica, servidor web y cliente MQTT sin errores</td></tr>
-      <tr><td>Encender y apagar el LED</td><td>El LED del simulador cambia y el ESP32 confirma el estado</td></tr>
-      <tr><td>Control deslizante en 0, 50 y 100</td><td>Servomotor en 0°, 90° y 180°; anillo con 0, 8 y 16 LEDs</td></tr>
-      <tr><td>Colores rojo y verde</td><td>Cambian el LED RGB y el anillo</td></tr>
-      <tr><td>Efectos arcoíris y termómetro</td><td>Animación correcta en el anillo</td></tr>
-      <tr><td>Nombre y mensaje</td><td>«Hola Ana» y «Hola UNAH» visibles en la OLED</td></tr>
-      <tr><td>Melodía</td><td>Evento registrado en el monitor serial</td></tr>
-      <tr><td>Pulsador «Avisar» (dos pulsaciones)</td><td>Contador, cuadro de mensajes y aviso en la interfaz</td></tr>
-      <tr><td>DHT22 en 40 °C</td><td>Lectura, alerta de temperatura alta y aviso</td></tr>
-      <tr><td>Potenciómetro en 20 %</td><td>La interfaz muestra 20 %</td></tr>
-      <tr><td>Simulación detenida</td><td>La interfaz indica «sin conexión»</td></tr>
-      <tr><td>Simulación reiniciada</td><td>Reconexión automática y cuadro de mensajes reiniciado</td></tr>
-      <tr><td>Código o intermediario incorrecto</td><td>Mensaje que indica qué revisar</td></tr>
+      <tr><td>Encender y apagar LED</td><td>LED cambia; ESP32 confirma</td></tr>
+      <tr><td>Deslizante en 0, 50, 100</td><td>Servo 0°, 90°, 180°; 0, 8, 16&nbsp;LEDs</td></tr>
+      <tr><td>Colores y efectos</td><td>LED RGB y anillo cambian</td></tr>
+      <tr><td>Nombre y mensaje</td><td>Visibles en la OLED</td></tr>
+      <tr><td>Pulsador «Avisar»</td><td>Contador, mensaje y aviso</td></tr>
+      <tr><td>DHT22 en 40&nbsp;°C</td><td>Alerta de temperatura alta</td></tr>
+      <tr><td>Potenciómetro en 20&nbsp;%</td><td>La interfaz muestra 20&nbsp;%</td></tr>
+      <tr><td>Detener / reiniciar</td><td>«Sin conexión» / reconexión</td></tr>
     </tbody>
   </table>
 </div>
 
-<figure>
-  <div class="fila tres">
-    <div><img src="img/wokwi-nivel-100.jpg" alt="Control deslizante al 100 %"><div class="sub">(a)</div></div>
+<div class="tabla">
+  <p class="rotulo">Tabla&nbsp;IV</p>
+  <p class="nombre">Tiempos medidos</p>
+  <table>
+    <thead><tr><th>Medición</th><th class="n">Tiempo</th></tr></thead>
+    <tbody>
+      <tr><td>Interfaz → LED en Wokwi</td><td class="n">0,59&nbsp;s</td></tr>
+      <tr><td>Potenciómetro en Wokwi → interfaz</td><td class="n">1,06&nbsp;s</td></tr>
+      <tr><td>Ida y vuelta, MQTT público (PC)</td><td class="n">≈0,30&nbsp;s</td></tr>
+      <tr><td>Ida y vuelta, Mosquitto local (PC)</td><td class="n">0,032&nbsp;s</td></tr>
+      <tr><td>Simulación detenida → «sin conexión»</td><td class="n">5,74&nbsp;s</td></tr>
+      <tr><td>Simulación reiniciada → «en línea»</td><td class="n">11,11&nbsp;s</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<figure class="ancho">
+  <div class="tres">
+    <div><img src="img/wokwi-nivel-100.jpg" alt="Deslizante al 100 %"><div class="sub">(a)</div></div>
     <div><img src="img/wokwi-arcoiris.jpg" alt="Efecto arcoíris"><div class="sub">(b)</div></div>
     <div><img src="img/wokwi-oled-mensaje.jpg" alt="Mensaje en la OLED"><div class="sub">(c)</div></div>
   </div>
-  <figcaption>Fig. 3. Estados del circuito en Wokwi controlados desde la aplicación. (a) Control deslizante al 100 %: anillo completo y servomotor a 180°. (b) Efecto arcoíris en el anillo. (c) La OLED muestra el nombre y el mensaje enviados; el anillo sigue la temperatura.</figcaption>
-</figure>
-
-<h3>B. Tiempos de respuesta</h3>
-<p>La Tabla V reúne los tiempos medidos. Los dos primeros se tomaron con un reloj desde la acción hasta que el cambio era visible e incluyen la automatización del navegador, por lo que son cotas superiores. La diferencia entre el intermediario público y uno local muestra que la mayor parte de la latencia proviene del viaje a internet y no del firmware. La aplicación considera desconectado al ESP32 cuando pasan 5 s sin recibir su estado, de ahí el tiempo de detección.</p>
-
-<div class="tabla">
-  <p class="rotulo">Tabla V</p>
-  <p class="nombre">Tiempos medidos</p>
-  <table>
-    <thead><tr><th>Medición</th><th>Entorno</th><th style="text-align:right">Tiempo</th></tr></thead>
-    <tbody>
-      <tr><td>Clic en «Encender LED» hasta el evento en el simulador</td><td>Wokwi, MQTT público</td><td class="n">0,59 s</td></tr>
-      <tr><td>Potenciómetro en el simulador hasta la interfaz</td><td>Wokwi, MQTT público</td><td class="n">1,06 s</td></tr>
-      <tr><td>Ida y vuelta de un comando</td><td>Firmware en la PC, MQTT público</td><td class="n">≈0,30 s</td></tr>
-      <tr><td>Ida y vuelta de un comando</td><td>Firmware en la PC, Mosquitto local</td><td class="n">0,032 s</td></tr>
-      <tr><td>Ida y vuelta de un comando</td><td>Firmware en la PC, HTTP directo</td><td class="n">≈0,005 s</td></tr>
-      <tr><td>Simulación detenida hasta «sin conexión»</td><td>Wokwi, MQTT público</td><td class="n">5,74 s</td></tr>
-      <tr><td>Simulación reiniciada hasta «en línea»</td><td>Wokwi, MQTT público</td><td class="n">11,11 s</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<h3>C. Pruebas automáticas y adaptación de la interfaz</h3>
-<p>Las doce pruebas automáticas se aprobaron. Cubren la agrupación de cambios en un solo envío, el reintento sin repetir acciones, la detección de reinicio del ESP32, la eliminación de eventos duplicados, el rechazo de un estado retenido antiguo como señal de conexión y los casos de intermediario caído o ESP32 sin publicar. En una ventana de 600 px de ancho la barra de conexión y las tarjetas se reacomodan sin recortar controles (Fig. 4).</p>
-
-<figure>
-  <div style="width: 29%; margin: 0 auto"><img src="img/app-600px.jpg" alt="Interfaz en una ventana angosta"><div class="sub fila">(a)</div></div>
-  <div style="margin-top: 8pt"><img src="img/app-sin-conexion.jpg" alt="Indicador sin conexión"><div class="sub fila">(b)</div></div>
-  <figcaption>Fig. 4. (a) La interfaz en una ventana de 600 px de ancho. (b) Indicador y mensaje de ayuda cuando el ESP32 deja de publicar.</figcaption>
+  <figcaption>Fig.&nbsp;3. Circuito en Wokwi controlado desde la aplicación. (a) Deslizante al 100&nbsp;%: anillo completo y servomotor a 180°. (b) Efecto arcoíris. (c) Nombre y mensaje en la OLED; el anillo sigue la temperatura.</figcaption>
 </figure>
 
 <!-- ======================= IV ======================= -->
 <h2>IV. Discusión</h2>
-<p>El planteamiento inicial pedía que el ESP32 fuera el servidor web. El firmware lo cumple, pero en el simulador gratuito ese servidor no es accesible desde la computadora. MQTT resolvió la restricción porque invierte el sentido de las conexiones: el microcontrolador ya no espera clientes, sino que se conecta a un intermediario. El costo es que el servidor pasa a ser el intermediario y que la latencia aumenta por el viaje a internet, aunque en las pruebas los tiempos de la Tabla V, de 1,1 s o menos, permitieron operar el LED y el servomotor de forma interactiva. Mantener ambos transportes con el mismo protocolo permitió conservar el servidor web sin duplicar la lógica de la interfaz.</p>
-<p>Se evaluó también exponer un intermediario Mosquitto propio mediante un túnel TCP de ngrok. La configuración quedó preparada y se probó en local, pero el plan gratuito de ngrok exige registrar una tarjeta para los túneles TCP y asigna una dirección aleatoria a cada túnel [7], lo que obliga a editar el firmware cada vez que se vuelve a abrir.</p>
-<p>Entre las limitaciones se cuentan: el intermediario público permite que cualquiera que conozca el tema lea o envíe mensajes, lo que se mitiga, sin eliminarse, con un código propio; el aviso de última voluntad depende del intervalo de mantenimiento, por lo que la interfaz también detecta la desconexión por ausencia de mensajes; y en el modo web, Flet registra un error interno de WebSocket al recargar la página, sin efecto sobre el funcionamiento.</p>
+<p>El firmware cumple el planteamiento de servidor web, pero en el simulador gratuito ese servidor no es accesible. MQTT resolvió la restricción al invertir el sentido de las conexiones, a costa de que el servidor pase a ser el intermediario y de una latencia mayor, que en las pruebas permitió operar el LED y el servomotor de forma interactiva. Un Mosquitto propio expuesto con ngrok funcionó en local, pero el túnel TCP gratuito exige registrar una tarjeta y cambia de dirección [7]. El intermediario público permite que cualquiera que conozca el tema lea o envíe mensajes; un código propio lo mitiga sin eliminarlo.</p>
 
 <!-- ======================= V ======================= -->
-<h2>V. Conclusiones y trabajo futuro</h2>
-<p>Se desarrolló una aplicación en Flet que controla y monitorea un ESP32 simulado en Wokwi, con todas las funciones verificadas de extremo a extremo. La separación entre la interfaz y la capa de conexión, junto con un protocolo único para HTTP y MQTT, permitió adaptarse a la restricción de red del simulador sin rehacer la interfaz. La ejecución del firmware en la computadora con módulos imitados resultó útil para depurar sin depender del simulador.</p>
-<p>Como trabajo futuro se propone usar un intermediario privado con usuario, contraseña y cifrado TLS; probar el firmware en una placa física, donde el modo HTTP directo funciona en la red local; y almacenar el historial de lecturas para graficarlo en la interfaz.</p>
+<h2>V. Conclusiones</h2>
+<p>Se desarrolló una aplicación Flet que controla y monitorea un ESP32 en Wokwi, con todas las funciones verificadas de extremo a extremo. Separar la interfaz de la capa de conexión y usar un protocolo único para HTTP y MQTT permitió adaptarse a la restricción del simulador sin rehacer la interfaz. Como trabajo futuro se propone un intermediario privado con TLS y la prueba en una placa física.</p>
 
 <!-- ======================= Apéndices ======================= -->
-<h2 class="apendice">Apéndice A. Formato de los mensajes</h2>
-<p>Un comando contiene sólo los campos que cambian. Los valores admitidos de <code>efecto</code> son <code>fijo</code>, <code>respirar</code>, <code>arcoiris</code> y <code>termometro</code>; los de <code>accion</code>, <code>melodia</code>, <code>pitido</code> y <code>reiniciar_contador</code>.</p>
-<pre>{
-  "led": true, "nivel": 75, "color": "Rojo", "rgb": [255, 0, 0],
-  "efecto": "arcoiris", "nombre": "Ana", "framework": "PyQt6",
-  "notificaciones": true, "mensaje": "Hola UNAH", "accion": "melodia"
-}</pre>
-<p>Estado publicado por el ESP32 (abreviado):</p>
-<pre>{
-  "dispositivo": "ESP32 UNAH", "ip": "10.10.0.2", "tiempo_activo": 142,
-  "memoria_libre": 80384, "peticiones": 12, "mqtt": true, "rssi": -75,
-  "sensores": {"temperatura": 40.0, "humedad": 55.0, "potenciometro": 20, "pulsaciones": 2},
-  "salidas": {"led": false, "nivel": 100, "color": "Verde", "rgb": [0, 255, 0],
-              "efecto": "termometro", "nombre": "Ana", "framework": "Flet",
-              "notificaciones": true, "mensaje": "Hola UNAH"},
-  "servo_grados": 180,
-  "anillo": ["#d4002a", "#d4002a", ..., "#000000"],
-  "eventos": [{"id": 17, "t": 120, "tipo": "aviso",
-               "texto": "Alerta: temperatura alta (40.0 C)"}],
-  "ultimo_evento": 17
-}</pre>
-<p>Por HTTP, <code>POST /api/control?desde=N</code> recibe el comando y responde el estado; <code>GET /api/estado?desde=N</code> devuelve el estado con los eventos cuyo identificador es mayor que <code>N</code>. Un JSON inválido produce una respuesta 400 y una ruta desconocida, 404.</p>
+<h2>Apéndice&nbsp;A. Formato de los mensajes</h2>
+<p class="sin-sangria">Comando (todos los campos son opcionales):</p>
+<pre>{"led": true, "nivel": 75, "color": "Rojo",
+ "rgb": [255, 0, 0], "efecto": "arcoiris",
+ "nombre": "Ana", "framework": "PyQt6",
+ "notificaciones": true, "mensaje": "Hola UNAH",
+ "accion": "melodia"}</pre>
+<p class="sin-sangria">Estado (abreviado):</p>
+<pre>{"ip": "10.10.0.2", "tiempo_activo": 142,
+ "sensores": {"temperatura": 40.0, "humedad": 55.0,
+              "potenciometro": 20, "pulsaciones": 2},
+ "salidas": {"led": false, "nivel": 100, ...},
+ "servo_grados": 180,
+ "anillo": ["#d4002a", ..., "#000000"],
+ "eventos": [{"id": 17, "tipo": "aviso",
+   "texto": "Alerta: temperatura alta (40.0 C)"}],
+ "ultimo_evento": 17}</pre>
 
-<h2>Apéndice B. Fragmentos del código</h2>
-<p>Los fragmentos están simplificados; el código completo se encuentra en el repositorio [9] (Apéndice D).</p>
-<h3>B.1. Tarea MQTT del firmware (<code>wokwi/main.py</code>)</h3>
-<pre>async def tarea_mqtt():
-    id_cliente = "esp32-" + binascii.hexlify(unique_id()).decode()
-    while True:
-        try:
-            cliente = MQTTClient(id_cliente, MQTT_BROKER, port=MQTT_PUERTO, keepalive=15)
-            cliente.set_callback(al_recibir)
-            cliente.set_last_will(TEMA + "/conexion", b"offline", retain=True)
-            cliente.connect()
-            cliente.subscribe(TEMA + "/control")
-            cliente.publish(TEMA + "/conexion", b"online", retain=True)
-            while True:
-                cliente.check_msg()                    # ¿llegó un comando?
-                if publicar_ya or paso_un_segundo:
-                    datos = json.dumps(estado(ultimo_id - 10))
-                    cliente.publish(TEMA + "/estado", datos.encode(), retain=True)
-                await asyncio.sleep_ms(50)              # cede el turno a las demás tareas
-        except Exception:
-            await asyncio.sleep(3)                      # reintenta la conexión</pre>
-<h3>B.2. Validación de comandos en el firmware (extracto)</h3>
-<pre>def aplicar(cambios):
-    errores = []
-    if "led" in cambios:
-        nuevo = bool(cambios["led"])
-        if nuevo != salidas["led"]:
-            salidas["led"] = nuevo
-            registrar("LED " + ("encendido" if nuevo else "apagado"))
-            pitar()
-    if "nivel" in cambios:
-        salidas["nivel"] = a_entero(cambios["nivel"], 0, 100)   # se limita al rango
-    if "efecto" in cambios and cambios["efecto"] not in EFECTOS:
-        errores.append("efecto desconocido")
-    ...
-    led.value(1 if salidas["led"] else 0)
-    mover_servo(salidas["nivel"])
-    return errores</pre>
-<h3>B.3. Polimorfismo en la capa de conexión (<code>src/esp32.py</code>)</h3>
-<pre>class Conexion:
-    def pedir(self, **cambios):              # lo invocan los manejadores de Flet
-        with self._lock:
-            self._pendientes.update(cambios)
-
-    async def sincronizar(self) -> dict:     # cada subclase define el transporte
-        raise NotImplementedError
-
-class ConexionMQTT(Conexion):
-    async def sincronizar(self):
-        cambios = self._tomar_pendientes()
-        if cambios:
-            self._mqtt.publish(self.tema + "/control", json.dumps(cambios))
-        return self._filtrar_eventos(dict(self._estado))
-
-class ConexionHTTP(Conexion):
-    async def sincronizar(self):
-        cambios = self._tomar_pendientes()
-        respuesta = await self._http.post(f"{self.url}/api/control", json=cambios)
-        return self._filtrar_eventos(respuesta.json())</pre>
-
-<h2>Apéndice C. Instrucciones de ejecución</h2>
+<h2>Apéndice&nbsp;B. Ejecución</h2>
 <ol>
-  <li>En Wokwi, crear un proyecto ESP32 con MicroPython y reemplazar <code>main.py</code> y <code>diagram.json</code> por los archivos de la carpeta <code>wokwi/</code>. Al iniciar la simulación, el monitor serial debe mostrar <code>MQTT listo, tema: unah/paradigmas/unah-esp32-4821</code>.</li>
-  <li>En la computadora, dentro del proyecto, ejecutar <code>uv run flet run</code> para la aplicación de escritorio o <code>uv run flet run --web</code> para el navegador.</li>
-  <li>En la barra de conexión elegir MQTT, con el intermediario <code>broker.hivemq.com:1883</code> y el mismo código que la constante <code>CODIGO</code> del firmware. Aceptar los términos y usar los controles.</li>
-  <li>Sin Wokwi: <code>uv run python tools/esp32_en_pc.py</code> ejecuta el firmware en la computadora. En esa terminal, las órdenes <code>boton</code>, <code>temp 38</code>, <code>hum 70</code> y <code>pot 25</code> simulan el hardware.</li>
-  <li>Pruebas automáticas: <code>uv run pytest</code>.</li>
+  <li>En Wokwi, crear un proyecto ESP32 con MicroPython y pegar <code>wokwi/main.py</code> y <code>wokwi/diagram.json</code> del repositorio [9].</li>
+  <li>Ejecutar <code>uv run flet run</code> y conectar por MQTT a <code>broker.hivemq.com:1883</code> con el mismo código del firmware.</li>
+  <li>Sin Wokwi: <code>uv run python tools/esp32_en_pc.py</code>. Pruebas: <code>uv run pytest</code>.</li>
 </ol>
-
-<h2>Apéndice D. Estructura del repositorio</h2>
-<p>El proyecto se publica en GitHub [9]. La Tabla VI describe los archivos principales.</p>
-<div class="tabla">
-  <p class="rotulo">Tabla VI</p>
-  <p class="nombre">Archivos del repositorio</p>
-  <table>
-    <thead><tr><th>Archivo</th><th>Contenido</th></tr></thead>
-    <tbody>
-      <tr><td><code>wokwi/main.py</code></td><td>Firmware MicroPython: red, servidor HTTP, cliente MQTT, sensores, anillo, OLED y sonido</td></tr>
-      <tr><td><code>wokwi/diagram.json</code></td><td>Circuito de Wokwi</td></tr>
-      <tr><td><code>src/main.py</code></td><td>Interfaz en Flet y ciclo de sincronización</td></tr>
-      <tr><td><code>src/esp32.py</code></td><td>Capa de conexión: <code>Conexion</code>, <code>ConexionMQTT</code> y <code>ConexionHTTP</code></td></tr>
-      <tr><td><code>tools/esp32_en_pc.py</code></td><td>Ejecución del firmware en la computadora con módulos imitados</td></tr>
-      <tr><td><code>tools/mosquitto.conf</code></td><td>Configuración de un intermediario Mosquitto propio</td></tr>
-      <tr><td><code>tests/test_main.py</code></td><td>Doce pruebas automáticas de la capa de conexión</td></tr>
-    </tbody>
-  </table>
-</div>
 
 <!-- ======================= Referencias ======================= -->
 <h2>Referencias</h2>
@@ -457,6 +312,7 @@ class ConexionHTTP(Conexion):
   <li><span>[9]</span><span>C. R. Vasquez Lopez, A. D. Cornejo Ortega, E. S. Membreño Argueta, B. N. Santiago, D. O. Fuentes Teruel y J. O. Baca Aguilar, «Panel IoT con Flet y un ESP32 simulado en Wokwi», repositorio de GitHub, 2026. [En línea]. Disponible: <a href="https://github.com/crafael23/paradigmas-trabajo-13-10">https://github.com/crafael23/paradigmas-trabajo-13-10</a>.</span></li>
 </ol>
 
+</div>
 </main>
 </body>
 </html>
