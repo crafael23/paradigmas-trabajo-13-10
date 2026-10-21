@@ -31,7 +31,7 @@
   /* ---------- Cabecera ---------- */
   .titulo { font-size: 24pt; font-weight: normal; text-align: center; line-height: 1.12; margin: 0 0 10pt; hyphens: none; -webkit-hyphens: none; }
   h2, h3, code, pre, th { hyphens: none; -webkit-hyphens: none; }
-  .autores { font-size: 11pt; text-align: center; margin: 0; text-indent: 0; }
+  .autores { font-size: 11pt; text-align: center; margin: 0 0 4pt; text-indent: 0; line-height: 1.3; }
   .institucion { font-size: 11pt; text-align: center; font-style: italic; margin: 0 0 22pt; text-indent: 0; }
 
   .resumen, .claves { font-size: 9pt; font-weight: bold; text-align: justify; margin: 0; text-indent: 1em; line-height: 1.25; }
@@ -94,8 +94,15 @@
 <main class="hoja">
 
 <h1 class="titulo">Panel IoT con Flet y un ESP32 simulado en Wokwi: control y monitoreo por MQTT y HTTP</h1>
-<p class="autores">Nombre A. Apellido</p>
-<p class="institucion">Universidad Nacional Autónoma de Honduras, Paradigmas de Programación, correo electrónico del autor</p>
+<p class="autores">
+  Claudio Rafael Vasquez Lopez, 20192002377<br>
+  Axel David Cornejo Ortega, 20192030294<br>
+  Eva Sarahí Membreño Argueta, 20232000863<br>
+  Brenda Nicole Santiago, 20212030857<br>
+  Daniel Orlando Fuentes Teruel, 20212020451<br>
+  José Omar Baca Aguilar, 20172030218
+</p>
+<p class="institucion">Universidad Nacional Autónoma de Honduras, Paradigmas de Programación</p>
 
 <p class="resumen"><i>Resumen</i>—Se presenta una aplicación de escritorio y web escrita en Python con el marco Flet que controla un microcontrolador ESP32 simulado en la plataforma Wokwi y muestra en tiempo real las lecturas de sus sensores. La interfaz parte de un formulario de ejemplo (campo de texto, casilla, control deslizante, lista desplegable, opciones excluyentes e interruptor) y asigna a cada elemento una acción física: encender un LED, mover un servomotor, fijar el color de un LED RGB y de un anillo de 16 LEDs direccionables, escribir en una pantalla OLED y activar un zumbador. El firmware, escrito en MicroPython, atiende de forma concurrente un servidor web propio y un cliente de mensajería por publicación y suscripción, y ambos canales comparten el mismo formato de mensajes. Como el simulador gratuito sólo admite conexiones salientes desde el microcontrolador, la comunicación por publicación y suscripción a través de un intermediario público resultó la vía viable sin costo. Las pruebas de extremo a extremo sobre el simulador confirmaron el funcionamiento de todos los controles y de todas las lecturas, con un tiempo aproximado de 0,6 s desde la interfaz hasta el simulador y de 1,1 s en sentido inverso, además de la detección de desconexión en menos de 6 s y la reconexión automática.</p>
 <p class="claves"><i>Palabras clave</i>— Internet de las cosas, MicroPython, interfaces gráficas de usuario.</p>
